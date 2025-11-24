@@ -141,6 +141,5 @@ class ReservationService:
         self.socketio.emit("table_update", {"tables": tables})
 
     def emit_user_update(self, username):
-        print("Emitting user update for", username)
         user = self.user_repository.find_by_username(username)
         self.socketio.emit("user_update", {"user": user},room=username)

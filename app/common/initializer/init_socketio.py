@@ -14,7 +14,6 @@ def  _register_socket_handlers(socketio_instance):
     def handle_connect():
         # 클라이언트가 연결 시 쿼리 파라미터로 전달한 username을 가져옵니다.
         username = request.args.get('username') 
-        print("Socket connected for user:", username)
         if username:
             # 사용자의 username을 Room 이름으로 사용하여 join (가입)
             join_room(username) 

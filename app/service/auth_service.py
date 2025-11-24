@@ -13,7 +13,6 @@ class AuthService:
         if self.user_repository.find_by_username(username):
             return False, "이미 사용 중인 username입니다."
         
-        print("Signing up user:", username)
         self.user_repository.save(username, password, phone)
         return True, "회원가입 성공"
 
