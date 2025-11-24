@@ -7,6 +7,7 @@ services:
       - "27021:27017"
     volumes:
       - mongo1-data:/data/db
+      - mongo1-config:/data/configdb
     networks:
       - mongo-cluster
     healthcheck:
@@ -23,6 +24,7 @@ services:
       - "27022:27017"
     volumes:
       - mongo2-data:/data/db
+      - mongo2-config:/data/configdb
     networks:
       - mongo-cluster
     healthcheck:
@@ -39,6 +41,7 @@ services:
       - "27023:27017"
     volumes:
       - mongo3-data:/data/db
+      - mongo3-config:/data/configdb
     networks:
       - mongo-cluster
     healthcheck:
@@ -60,6 +63,8 @@ services:
     networks:
       - mongo-cluster
     volumes:
+      - mongo1-data:/data/db
+      - mongo1-config:/data/configdb
       - ./init-replica.sh:/init-replica.sh
     command: ["bash", "/init-replica.sh"]
     restart: "no"
@@ -78,15 +83,14 @@ services:
     depends_on:
       mongo-replicaset-init:
         condition: service_completed_successfully
-
-    deploy:
-      resources:
-        limits:
-          cpus: '0.1'
+    
 volumes:
   mongo1-data:
   mongo2-data:
   mongo3-data:
+  mongo1-config:
+  mongo2-config:
+  mongo3-config:
 
 networks:
   mongo-cluster:
