@@ -1,0 +1,93 @@
+services:
+  mongo1:
+    image: mongo:latest
+    container_name: mongo1
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27021:27017"
+    volumes:
+      - mongo1-data:/data/db
+    networks:
+      - mongo-cluster
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand({ ping: 1 }).ok"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+  mongo2:
+    image: mongo:latest
+    container_name: mongo2
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27022:27017"
+    volumes:
+      - mongo2-data:/data/db
+    networks:
+      - mongo-cluster
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand({ ping: 1 }).ok"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+  mongo3:
+    image: mongo:latest
+    container_name: mongo3
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27023:27017"
+    volumes:
+      - mongo3-data:/data/db
+    networks:
+      - mongo-cluster
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand({ ping: 1 }).ok"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+  mongo-replicaset-init:
+    image: mongo:latest
+    container_name: mongo-replicaset-init
+    depends_on:
+      mongo1:
+        condition: service_healthy 
+      mongo2:
+        condition: service_healthy
+      mongo3:
+        condition: service_healthy
+    networks:
+      - mongo-cluster
+    volumes:
+      - ./init-replica.sh:/init-replica.sh
+    command: ["bash", "/init-replica.sh"]
+    restart: "no"
+  
+  flask-app:
+    build: .
+    container_name: flask-app-container
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env.docker
+    environment:
+      - ENVIRONMENT=docker
+    networks:
+      - mongo-cluster
+    depends_on:
+      mongo-replicaset-init:
+        condition: service_completed_successfully
+
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+volumes:
+  mongo1-data:
+  mongo2-data:
+  mongo3-data:
+
+networks:
+  mongo-cluster:
+    driver: bridge

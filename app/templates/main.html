@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="icon"
+      href="{{ url_for('static', filename='images/favicon_krafton.ico') }}"
+      type="image/x-icon"
+    />
+    <title>캐치 라운지!</title>
+    <!-- 웹소켓 사용 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"
+    ></script>
+    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <style>
+      #time-display {
+        position: fixed;
+        color: blue;
+        background-color: transparent; /* 배경색을 투명하게 설정 */
+        padding: 4px 8px; /* 패딩 추가 (선택 사항) */
+        font-size: 17px; /* 폰트 크기 조정 (선택 사항) */
+        display: none; /* 기본적으로 숨김 */
+        font-weight: bold;
+      }
+    </style>
+  
+  </head>
+  <body class="bg-gray-100 min-h-screen flex flex-col items-center pt-24">
+    <nav
+      class="w-full bg-white shadow-md py-4 px-6 flex items-center fixed top-0 left-0"
+    >
+      <a href="/" class="flex items-center">
+        <img
+          src="{{ url_for('static', filename='images/krafton_basic.jpg') }}"
+          alt="Logo"
+          class="h-10"
+        />
+      </a>
+    </nav>
+    <div class="wrap w-full max-w-screen-lg p-4">
+      
+      <!-- Upper Table Buttons -->
+      <div class="upper flex flex-wrap justify-center gap-2 md:gap-4 mb-10">
+        {% for table in tables[:12] %}
+        <button
+          class="button {{ 'bg-red-500' if table.occupied else 'bg-gray-500' }} text-white py-2 px-4 md:px-6 rounded"
+          data-table-num="{{ table.tableNum }}"
+        >
+          {{ table.tableNum }}
+        </button>
+        {% endfor %}
+      </div>
+
+      <!-- Lower Table Buttons -->
+      <div class="downer grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
+        {% for table in tables[12:] %}
+        <button
+          class="button {{ 'bg-red-500' if table.occupied else 'bg-gray-500' }} text-white py-4 rounded"
+          data-table-num="{{ table.tableNum }}"
+        >
+          {{ table.tableNum }}
+        </button>
+        {% endfor %}
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex justify-center gap-4 mb-10">
+        <button
+          id="complete-button"
+          class="button bg-green-500 text-white py-2 px-4 rounded"
+        >
+          예약완료
+        </button>
+        <button
+          id="leave-button"
+          class="button bg-yellow-500 text-white py-2 px-4 rounded"
+        >
+          퇴실하기
+        </button>
+        <!-- <button id="logout-button" class="button bg-red-500 text-white py-2 px-4 rounded" onclick="logout()">Logout</button> -->
+        <a
+          href="{{ url_for('auth_bp.logout') }}"
+          class="button bg-red-500 text-white py-2 px-4 rounded"
+          >Logout</a
+        >
+      </div>
+
+      <!-- Status Display -->
+      <div class="status text-center" id="status">
+        <h3 class="text-lg font-bold">예약 정보</h3>
+        <p>아이디: {{ user.username }}</p>
+        <p>전화번호: {{ user.phone }}</p>
+        <p>예약 좌석: {{ user.is_reserved }}</p>
+      </div>
+
+      <div id="user-data" data-username="{{ user.username }}" style="display: none;"></div>
+    </div>
+    <div
+      id="time-display"
+      class="fixed text-white bg-black rounded px-2 py-1 hidden"
+    ></div>
+  </body>
+</html>
