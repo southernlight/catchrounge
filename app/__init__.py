@@ -5,6 +5,7 @@ from app.common.initializer.init_socketio import init_socketio
 from app.common.initializer.init_repositories import init_repositories
 from app.common.initializer.init_services import init_services
 from app.common.initializer.init_blueprints import init_blueprints
+from app.common.initializer.init_logger import init_logger
 from app.common.jwt_filter import jwt_filter
 from app.common.error_handler import register_error_handlers
 
@@ -12,6 +13,9 @@ def create_app():
 
     app = Flask(__name__)
     app.config.from_object(Config)
+
+    # Logger 초기화
+    init_logger()
 
     # DB 초기화
     db = init_db(app)
