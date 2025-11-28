@@ -20,49 +20,6 @@ class ReservationService:
         self.scheduler.start()
         self.db_client = db_client
 
-
-        # 1. 🚨 [필수] Heartbeat 체크 작업 등록 (1초마다)
-        # 이 작업이 1초마다 EVENT_JOB_SUBMITTED를 발생시켜 측정 기반을 만듭니다.
-        self.scheduler.add_job(
-            self.check_scheduler_interval, 
-            'interval', 
-            seconds=1, 
-            id='heartbeat_check', # 이 ID로 이벤트를 추적합니다.
-            replace_existing=True
-        )
-
-    def check_scheduler_interval(self):
-            """1초마다 실행되는 Heartbeat 작업. 1초 초과 시 경고 로그를 남깁니다."""
-            
-            current_time = time.time()
-            
-            if self.last_heartbeat_time is not None:
-                # 이전 실행 시간과의 실제 간격 계산
-                interval = current_time - self.last_heartbeat_time
-                
-                # 1초를 초과했는지 확인합니다 (예: 1.1초 이상).
-                if interval > 1.5: 
-                    log.warning(
-                        f"🚨 HEARTBEAT LAG WARNING! Expected ~1.0s, but saw {interval:.4f} seconds."
-                    )
-                else:
-                    log.info(f"[{datetime.now().strftime('%H:%M:%S.%f')[:-3]}] 💚 Heartbeat")
-
-            
-            # 현재 시간을 다음 비교를 위해 저장
-            self.last_heartbeat_time = current_time
-
-    # 🚨 워커 스레드를 점유할 긴 작업 추가
-    def long_blocking_job(self, name):
-        """실제 DB 쿼리나 네트워크 I/O처럼 오래 걸리는 작업을 시뮬레이션합니다."""
-        log.info(f"[{datetime.now().strftime('%H:%M:%S')}] Job {name}: 🚨 워커 스레드 점유 시작 (10초 Block)")
-        # CPU를 점유하기 위해 무한 루프와 시간 제한을 결합
-        end_time = time.time() + 10 # 10초간 실행
-        i = 0
-        while time.time() < end_time:
-            i += 1 # 실제 무거운 계산 시뮬레이션
-        log.info(f"[{datetime.now().strftime('%H:%M:%S')}] Job {name}: ✅ 워커 스레드 반납")
-
     def _execute_reservation_logic(self, username, table_num, session):
 
         # 1. 사용자 정보 확인
@@ -153,7 +110,7 @@ class ReservationService:
         time_remaining = end_time - now
 
         if time_remaining.total_seconds() > 0:
-            
+
             # 만료 시간에 맞춰 작업 예약
             self.scheduler.add_job(
                 self.expire_table, 
