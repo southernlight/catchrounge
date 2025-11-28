@@ -39,7 +39,7 @@ class ReservationService:
 
         # 4. 예약 처리
         kst_now = datetime.now(timezone(timedelta(hours=9)))
-        utc_end_time = (kst_now + timedelta(seconds=1)).astimezone(timezone.utc)
+        utc_end_time = (kst_now + timedelta(minutes=30)).astimezone(timezone.utc)
 
         # 5. 테이블 예약 상태 업데이트
         self.table_repository.update_table(
