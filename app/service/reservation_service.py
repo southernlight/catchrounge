@@ -16,16 +16,9 @@ class ReservationService:
         self.user_repository = user_repository
         self.socketio = socketio
 
-        executors = {
-            'default' : ThreadPoolExecutor(10)
-        }
-
-        self.scheduler = BackgroundScheduler(executors=executors)
-
+        self.scheduler = BackgroundScheduler()
         self.scheduler.start()
         self.db_client = db_client
-
-        self.last_heartbeat_time = None
 
 
         # 1. 🚨 [필수] Heartbeat 체크 작업 등록 (1초마다)
@@ -48,7 +41,7 @@ class ReservationService:
                 interval = current_time - self.last_heartbeat_time
                 
                 # 1초를 초과했는지 확인합니다 (예: 1.1초 이상).
-                if interval > 1.0: 
+                if interval > 1.5: 
                     log.warning(
                         f"🚨 HEARTBEAT LAG WARNING! Expected ~1.0s, but saw {interval:.4f} seconds."
                     )
@@ -104,9 +97,6 @@ class ReservationService:
             {"is_reserved": table_num},
             session
         )
-
-        run_date_for_long_jobs = datetime.now(timezone.utc) + timedelta(seconds=1)
-        # self.scheduler.add_job(self.long_blocking_job, 'date', run_date=run_date_for_long_jobs, args=[f'LongJob-{1}'])
             
         # 7. 예약 만료 작업 예약 (트랜잭션이 커밋된 후에도 스케줄러는 독립적으로 작동)
         self.schedule_expiration(table_num, username, utc_end_time)
@@ -152,7 +142,6 @@ class ReservationService:
 
          # 예약 취소 후 emit
         self.emit_table_update()
-        # self.emit_user_update(username)
 
         return {"success": True, "message": f"테이블 {reserved_table_num} 예약이 취소되었습니다."} 
     
@@ -164,22 +153,21 @@ class ReservationService:
         time_remaining = end_time - now
 
         if time_remaining.total_seconds() > 0:
+            
             # 만료 시간에 맞춰 작업 예약
-            logging.info(f"time_remaining: {time_remaining.total_seconds()} seconds")
-            logging.info(f"Scheduling expiration for table {table_num} at {end_time.isoformat()}")
-            self.scheduler.add_job(self.expire_table, 'date', run_date=end_time, args=[table_num,username])
+            self.scheduler.add_job(
+                self.expire_table, 
+                'date', 
+                run_date=end_time, 
+                args=[table_num,username],
+                misfire_grace_time = 10)
 
     def expire_table(self, table_num,username):
 
-        # log.info(f"Expiring table {table_num} for user {username} at {datetime.now(timezone.utc).isoformat()}")
         """정확한 시간에 테이블 상태 업데이트"""
-
         table = self.table_repository.find_by_table_num(table_num)
-        # log.info(f"Current table state: {table}") 
-        # time.sleep(1.0)
 
         if not table["occupied"] or table["user_name"] != username:
-            logging.info(f"Table {table_num} is already free or reserved by another user.")
             return
 
         # 테이블 상태 만료 처리
@@ -187,19 +175,15 @@ class ReservationService:
             table_num,
             {"occupied": False,"user_name" : None ,"time": None}
         )
-        # time.sleep(1.0)
 
         # 관련 사용자 정보 업데이트
         self.user_repository.update_user(
             username,
             {"is_reserved": 0}
         )
-        # time.sleep(1.0)
-
 
         self.emit_table_update()
         self.emit_user_update(username)
-        # time.sleep(1.0)
 
     
     def emit_table_update(self):
