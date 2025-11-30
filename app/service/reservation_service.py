@@ -8,7 +8,6 @@ import logging
 
 log = logging.getLogger("my_app")
 
-
 class ReservationService:
     
     def __init__(self,table_repository,user_repository,socketio, db_client):
