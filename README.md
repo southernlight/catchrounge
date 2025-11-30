@@ -27,7 +27,7 @@ CatchRounge는 부트 캠프 라운지의 제한된 공간을 공정하게 사�
 ![reservation](./docs/reservation.gif)
 - **자동 퇴실 기능** : 예약된 시간이 지나면 좌석이 자동으로 해제되어 다른 사용자가 이용 가능
 
-![checkout](./docs/checkout.gif)
+![auto-checkout](./docs/auto-checkout.gif)
 
 
 ## 기술 스택
